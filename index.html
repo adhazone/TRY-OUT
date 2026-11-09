@@ -1,0 +1,326 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Latihan Soal dari PDF</title>
+<style>
+:root{--bg:#eef3f8;--card:#fff;--ink:#12263f;--mut:#5b6b80;--line:#cfd9e6;--acc:#1b5fd1;--ok:#17803d;--bad:#c4301f;--warn:#b45309}
+@media (prefers-color-scheme:dark){:root{--bg:#0e1621;--card:#16212f;--ink:#e8eef6;--mut:#94a3b8;--line:#2a3a4e;--acc:#6ea4ff;--ok:#4ade80;--bad:#ff7b6b;--warn:#fbbf24}}
+*{box-sizing:border-box}
+body{margin:0;background:var(--bg);color:var(--ink);font:16px/1.5 system-ui,-apple-system,"Segoe UI",Roboto,sans-serif;padding:env(safe-area-inset-top) 0 env(safe-area-inset-bottom)}
+main{max-width:640px;margin:0 auto;padding:16px}
+h1{font-size:22px;margin:8px 0 4px}h2{font-size:18px;margin:0 0 8px}
+p{margin:6px 0;color:var(--mut)}
+.card{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px;margin:12px 0}
+button,select,input,textarea{font:inherit;color:inherit}
+button{background:var(--acc);color:#fff;border:0;border-radius:10px;padding:12px 16px;font-weight:600;cursor:pointer;min-height:44px}
+button.alt{background:transparent;color:var(--acc);border:1.5px solid var(--acc)}
+button:disabled{opacity:.5}
+button:focus-visible,textarea:focus-visible,select:focus-visible,input:focus-visible{outline:3px solid var(--warn);outline-offset:2px}
+textarea,select,input[type=number],input[type=file]{width:100%;background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px}
+textarea{min-height:240px;font-size:14px}
+.row{display:flex;gap:8px;flex-wrap:wrap;align-items:center}.row>*{flex:1}
+.hide{display:none}
+#bar{height:8px;background:var(--line);border-radius:4px;overflow:hidden;margin-top:8px}
+#bar i{display:block;height:100%;width:0;background:var(--acc);transition:width .2s}
+.top{position:sticky;top:0;background:var(--bg);padding:8px 0;z-index:5;display:flex;justify-content:space-between;align-items:center}
+#timer{font-size:28px;font-weight:700;font-variant-numeric:tabular-nums}
+#timer.low{color:var(--bad)}
+.opt{display:block;width:100%;text-align:left;background:var(--card);color:var(--ink);border:1.5px solid var(--line);margin:8px 0;font-weight:400}
+.opt.sel{border-color:var(--acc);background:color-mix(in srgb,var(--acc) 14%,var(--card))}
+.opt.ok{border-color:var(--ok)}.opt.no{border-color:var(--bad)}
+.nav{display:flex;flex-wrap:wrap;gap:6px;margin:10px 0;max-height:200px;overflow-y:auto;position:relative}
+.nav button{width:38px;min-height:38px;padding:0;background:var(--card);color:var(--ink);border:1.5px solid var(--line)}
+.nav button.done{background:#17803d;color:#fff;border-color:#17803d}
+.nav button.flag{border:3px solid #c4301f}
+.nav button.cur{background:#fbbf24;color:#222;border-color:#fbbf24}
+#list .row label,#list select{display:none}
+.q{white-space:pre-wrap;font-size:18px}
+.big{font-size:44px;font-weight:800}
+.edit{border-top:1px solid var(--line);padding-top:10px;margin-top:10px}
+.edit textarea{min-height:90px}
+.bad{color:var(--bad)}.ok{color:var(--ok)}
+</style>
+</head>
+<body>
+<main>
+
+<section id="s1">
+  <h1>Latihan soal dari PDF</h1>
+  <p>Semua diproses di HP kamu. File tidak diunggah ke mana pun.</p>
+  <div class="card">
+    <h2>1. Pilih PDF</h2>
+    <input type="file" id="file" accept="application/pdf">
+    <div id="prog" class="hide"><p id="ptxt"></p><div id="bar"><i></i></div></div>
+  </div>
+  <div id="saved" class="card hide">
+    <h2>Soal tersimpan</h2>
+    <p id="savedinfo"></p>
+    <button id="useSaved">Pakai soal ini</button>
+  </div>
+  <div id="rawbox" class="card hide">
+    <h2>2. Periksa teks hasil bacaan</h2>
+    <p>Format yang dikenali: soal diawali "1." dan pilihan diawali "A.". Perbaiki salah baca di sini.</p>
+    <textarea id="raw"></textarea>
+    <p></p><button id="parse">Buat soal</button>
+  </div>
+</section>
+
+<section id="s2" class="hide">
+  <h1>Periksa soal</h1>
+  <p id="cnt"></p>
+  <div id="list"></div>
+  <div class="card">
+    <h2>Kunci jawaban (disembunyikan)</h2>
+    <p>Upload PDF kunci, atau ketik/tempel. Contoh: "1. C 2. A 3. E" atau langsung "CAE…". Isi kunci tidak akan ditampilkan sampai kuis selesai.</p>
+    <input type="file" id="kfile" accept="application/pdf">
+    <p></p>
+    <textarea id="ktxt" style="min-height:80px" placeholder="Ketik atau tempel kunci di sini"></textarea>
+    <p id="kinfo"></p>
+  </div>
+  <div class="card">
+    <h2>Batas waktu total</h2>
+    <div class="row"><input type="number" id="mins" min="1" max="300" value="100" aria-label="Menit"><span>menit</span></div>
+    <p></p>
+    <div class="row"><button class="alt" id="back1">Kembali</button><button id="start">Mulai kuis</button></div>
+  </div>
+</section>
+
+<section id="s3" class="hide">
+  <div class="top"><span id="prog3">1/1</span><span id="timer">00:00</span><button class="alt" id="pause" style="flex:0">Jeda</button></div>
+  <div class="card"><div class="q" id="qtxt"></div><div id="opts"></div></div>
+  <div class="row"><button class="alt" id="prev">Sebelumnya</button><button id="next">Berikutnya</button></div>
+  <button class="alt" id="flag" style="width:100%;margin-top:8px">Tandai ragu-ragu</button>
+  <p>Hijau: sudah dijawab. Kuning: sedang dibuka. Garis merah: ragu-ragu.</p>
+  <div class="nav" id="nav"></div>
+  <button class="alt" id="finish" style="width:100%">Selesai sekarang</button>
+</section>
+
+<section id="s4" class="hide">
+  <div class="card" style="text-align:center">
+    <p id="why"></p>
+    <div class="big" id="score"></div>
+    <p id="detail"></p>
+    <div class="row"><button id="retryWrong">Ulangi soal yang salah</button><button class="alt" id="home">Menu awal</button></div>
+  </div>
+  <div id="review"></div>
+</section>
+
+</main>
+
+<script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/tesseract.js@5.1.1/dist/tesseract.min.js"></script>
+<script>
+pdfjsLib.GlobalWorkerOptions.workerSrc="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js";
+const $=id=>document.getElementById(id);
+const L=String.fromCharCode(65);
+let Q=[],ans=[],flags=[],KEY=store("quiz_key")||{},idx=0,endAt=0,tick=null,paused=false,pausedLeft=0;
+
+function store(k,v){try{if(v===undefined){const s=localStorage.getItem(k);return s?JSON.parse(s):null}localStorage.setItem(k,JSON.stringify(v))}catch(e){return null}}
+function drop(k){try{localStorage.removeItem(k)}catch(e){}}
+function show(id){["s1","s2","s3","s4"].forEach(s=>$(s).classList.toggle("hide",s!==id));window.scrollTo(0,0)}
+function esc(s){return s.replace(/[&<>]/g,c=>({"&":"&amp;","<":"&lt;",">":"&gt;"}[c]))}
+
+/* ---------- Baca PDF ---------- */
+async function readPdf(f,done){
+  $("prog").classList.remove("hide");$("rawbox").classList.add("hide");
+  try{
+    const pdf=await pdfjsLib.getDocument({data:await f.arrayBuffer()}).promise;
+    let out="",worker=null;
+    for(let p=1;p<=pdf.numPages;p++){
+      setP(`Membaca halaman ${p} dari ${pdf.numPages}`,(p-1)/pdf.numPages);
+      const page=await pdf.getPage(p);
+      const tc=await page.getTextContent();
+      let txt=lines(tc.items);
+      if(txt.replace(/\s/g,"").length<25){
+        if(!worker){setP("Menyiapkan OCR (unduhan pertama agak lama)…",0);worker=await Tesseract.createWorker("ind")}
+        setP(`OCR halaman ${p} dari ${pdf.numPages}`,(p-1)/pdf.numPages);
+        const vp=page.getViewport({scale:2});
+        const cv=document.createElement("canvas");cv.width=vp.width;cv.height=vp.height;
+        await page.render({canvasContext:cv.getContext("2d"),viewport:vp}).promise;
+        txt=(await worker.recognize(cv)).data.text;
+      }
+      out+=txt+"\n";
+    }
+    if(worker)await worker.terminate();
+    setP("Selesai membaca.",1);
+    done(out.trim());
+  }catch(err){setP("Gagal membaca PDF: "+err.message+". Cek koneksi internet lalu coba lagi.",0)}
+}
+$("file").addEventListener("change",e=>{const f=e.target.files[0];if(f)readPdf(f,t=>{$("raw").value=t;$("rawbox").classList.remove("hide")})});
+$("kfile").addEventListener("change",e=>{const f=e.target.files[0];if(f)readPdf(f,t=>{$("ktxt").value="";KEY=parseKey(t);showKey()})});
+function setP(t,r){if(!$("s2").classList.contains("hide"))$("kinfo").textContent=t;$("ptxt").textContent=t;$("bar").firstElementChild.style.width=Math.round(r*100)+"%"}
+function lines(items){
+  let y=null,s="";
+  for(const it of items){
+    if(y!==null&&Math.abs(it.transform[5]-y)>3)s+="\n";
+    s+=it.str;y=it.transform[5];
+  }
+  return s;
+}
+
+/* ---------- Pecah jadi soal ---------- */
+function parse(text){
+  const res=[];let cur=null,opt=-1;
+  for(let ln of text.split(/\r?\n/)){
+    ln=ln.trim();if(!ln)continue;
+    let m=ln.match(/^(\d{1,3})\s*[.)]\s+(.*)/);
+    let o=ln.match(/^\(?([A-Ea-e])\s*[.)]\s*(.+)/);
+    if(m&&!(cur&&opt>=0&&!o&&cur.o.length<2&&false)){
+      if(cur)res.push(cur);cur={n:+m[1],q:m[2],o:[],k:-1};opt=-1;continue;
+    }
+    if(!cur)continue;
+    if(o){cur.o.push(o[2]);opt=cur.o.length-1}
+    else if(opt>=0)cur.o[opt]+=" "+ln;
+    else cur.q+="\n"+ln;
+  }
+  if(cur)res.push(cur);
+  return res.filter(x=>x.o.length>=2);
+}
+$("parse").onclick=()=>{
+  Q=parse($("raw").value);
+  if(!Q.length){alert("Belum ada soal pilihan ganda yang terbaca. Pastikan soal diawali 1. dan pilihan diawali A. lalu coba lagi.");return}
+  renderList();show("s2");
+};
+
+/* ---------- Kunci jawaban ---------- */
+function parseKey(t){
+  const k={};let m;
+  const re=/(\d{1,3})\s*[.\-:)=|]?\s*\(?([A-Ea-e])\)?(?![A-Za-z])/g;
+  while((m=re.exec(t)))k[+m[1]]=m[2].toUpperCase().charCodeAt(0)-65;
+  if(!Object.keys(k).length)[...t.replace(/[^A-Ea-e]/g,"").toUpperCase()].forEach((c,i)=>k[i+1]=c.charCodeAt(0)-65);
+  return k;
+}
+function showKey(){
+  const miss=Q.filter(q=>KEY[q.n]===undefined).map(q=>q.n);
+  const n=Q.length-miss.length;
+  $("kinfo").textContent=n?`Kunci terbaca untuk ${n} dari ${Q.length} soal. Isinya sengaja tidak ditampilkan.`+(miss.length&&miss.length<=15?` Nomor tanpa kunci: ${miss.join(", ")}.`:""):"Belum ada kunci jawaban.";
+  store("quiz_key",KEY);
+}
+$("ktxt").addEventListener("input",()=>{KEY=parseKey($("ktxt").value);showKey()});
+
+/* ---------- Periksa soal ---------- */
+function renderList(){
+  $("cnt").textContent=`${Q.length} soal terbaca. Periksa teks soal bila perlu, lalu masukkan kunci jawaban di bawah.`;showKey();
+  $("list").innerHTML="";
+  Q.forEach((q,i)=>{
+    const d=document.createElement("div");d.className="card";
+    d.innerHTML=`<b>Soal ${i+1}</b>
+    <div class="edit"><textarea data-i="${i}" aria-label="Teks soal ${i+1}">${esc(q.q+"\n"+q.o.map((t,j)=>String.fromCharCode(65+j)+". "+t).join("\n"))}</textarea></div>
+    <div class="row edit"><label for="k${i}">Kunci jawaban</label><select id="k${i}" data-k="${i}"><option value="-1">Belum dipilih</option>${q.o.map((_,j)=>`<option value="${j}" ${q.k===j?"selected":""}>${String.fromCharCode(65+j)}</option>`).join("")}</select><button class="alt" data-del="${i}" style="flex:0">Hapus</button></div>`;
+    $("list").appendChild(d);
+  });
+}
+$("list").addEventListener("change",e=>{
+  const t=e.target;
+  if(t.dataset.k!==undefined)Q[+t.dataset.k].k=+t.value;
+  if(t.dataset.i!==undefined){
+    const r=parse("1. "+t.value.replace(/^\s*\d+[.)]\s*/,""));
+    if(r[0]){const k=Q[+t.dataset.i].k,n=Q[+t.dataset.i].n;Q[+t.dataset.i]=r[0];r[0].n=n;Q[+t.dataset.i].k=k<r[0].o.length?k:-1;renderList()}
+  }
+});
+$("list").addEventListener("click",e=>{
+  if(e.target.dataset.del!==undefined){Q.splice(+e.target.dataset.del,1);renderList()}
+});
+$("back1").onclick=()=>show("s1");
+
+/* ---------- Kuis ---------- */
+$("start").onclick=()=>{
+  if(!Q.length)return;
+  if(!Object.keys(KEY).length&&!confirm("Belum ada kunci jawaban, jadi skor tidak bisa dihitung. Tetap mulai?"))return;
+  Q.forEach(q=>q.k=KEY[q.n]!==undefined?KEY[q.n]:-1);
+  store("quiz_questions",Q);
+  ans=Q.map(()=>-1);flags=Q.map(()=>false);idx=0;paused=false;
+  endAt=Date.now()+Math.max(1,+$("mins").value||30)*60000;
+  saveSession();runQuiz();
+};
+function saveSession(){store("quiz_session",{endAt,ans,flags,idx,paused,pausedLeft})}
+function runQuiz(){
+  show("s3");$("pause").textContent=paused?"Lanjut":"Jeda";
+  drawQ();clearInterval(tick);tick=setInterval(onTick,250);onTick();
+}
+function left(){return paused?pausedLeft:endAt-Date.now()}
+function onTick(){
+  const ms=left();
+  if(ms<=0){finishQuiz("Waktu habis.");return}
+  const s=Math.ceil(ms/1000),m=Math.floor(s/60);
+  $("timer").textContent=String(m).padStart(2,"0")+":"+String(s%60).padStart(2,"0");
+  $("timer").classList.toggle("low",s<=10);
+}
+function drawQ(){
+  const q=Q[idx];
+  $("prog3").textContent=`${idx+1}/${Q.length}`;
+  $("qtxt").textContent=q.q;
+  $("opts").innerHTML="";
+  q.o.forEach((t,j)=>{
+    const b=document.createElement("button");b.className="opt"+(ans[idx]===j?" sel":"");
+    b.textContent=String.fromCharCode(65+j)+". "+t;
+    b.onclick=()=>{if(paused)return;ans[idx]=j;saveSession();drawQ()};
+    $("opts").appendChild(b);
+  });
+  $("nav").innerHTML="";
+  Q.forEach((_,i)=>{
+    const b=document.createElement("button");b.textContent=i+1;
+    b.className=(ans[i]>=0?"done ":"")+(flags[i]?"flag ":"")+(i===idx?"cur":"");
+    b.onclick=()=>{idx=i;saveSession();drawQ()};
+    $("nav").appendChild(b);
+  });
+  const c=$("nav").querySelector(".cur");if(c)$("nav").scrollTop=Math.max(0,c.offsetTop-80);
+  $("flag").textContent=flags[idx]?"Hapus tanda ragu-ragu":"Tandai ragu-ragu";
+  $("prev").disabled=idx===0;$("next").disabled=idx===Q.length-1;
+}
+$("prev").onclick=()=>{idx--;saveSession();drawQ()};
+$("flag").onclick=()=>{flags[idx]=!flags[idx];saveSession();drawQ()};
+$("next").onclick=()=>{idx++;saveSession();drawQ()};
+$("pause").onclick=()=>{
+  if(!paused){pausedLeft=endAt-Date.now();paused=true}
+  else{endAt=Date.now()+pausedLeft;paused=false}
+  $("pause").textContent=paused?"Lanjut":"Jeda";saveSession();
+};
+$("finish").onclick=()=>{
+  const blank=ans.filter(a=>a<0).length;
+  if(confirm(blank?`Masih ada ${blank} soal kosong. Selesaikan sekarang?`:"Selesaikan kuis sekarang?"))finishQuiz("Kuis selesai.");
+};
+
+/* ---------- Hasil ---------- */
+let wrong=[];
+function finishQuiz(why){
+  clearInterval(tick);drop("quiz_session");
+  const keyed=Q.filter(q=>q.k>=0).length;
+  let ok=0;wrong=[];
+  Q.forEach((q,i)=>{if(q.k>=0){if(ans[i]===q.k)ok++;else wrong.push(i)}});
+  $("why").textContent=why;
+  $("score").textContent=keyed?Math.round(ok/keyed*100):"–";
+  $("detail").textContent=keyed?`${ok} benar dari ${keyed} soal berkunci. ${ans.filter(a=>a<0).length} soal kosong.`:"Belum ada kunci jawaban, jadi skor tidak bisa dihitung.";
+  $("retryWrong").classList.toggle("hide",!wrong.length);
+  $("review").innerHTML=wrong.map(i=>{
+    const q=Q[i],a=ans[i];
+    return `<div class="card"><b>Soal ${i+1}</b><div class="q">${esc(q.q)}</div>
+    <p class="bad">Jawabanmu: ${a>=0?String.fromCharCode(65+a)+". "+esc(q.o[a]):"kosong"}</p>
+    <p class="ok">Kunci: ${String.fromCharCode(65+q.k)}. ${esc(q.o[q.k])}</p></div>`;
+  }).join("");
+  show("s4");
+}
+$("retryWrong").onclick=()=>{
+  Q=wrong.map(i=>Q[i]);ans=Q.map(()=>-1);flags=Q.map(()=>false);idx=0;paused=false;
+  endAt=Date.now()+Math.max(1,+$("mins").value||30)*60000;
+  saveSession();runQuiz();
+};
+$("home").onclick=()=>{init();show("s1")};
+
+/* ---------- Awal ---------- */
+function init(){
+  const sq=store("quiz_questions");
+  $("saved").classList.toggle("hide",!(sq&&sq.length));
+  if(sq)$("savedinfo").textContent=`${sq.length} soal dari sesi sebelumnya.`;
+}
+$("useSaved").onclick=()=>{Q=store("quiz_questions")||[];if(Q.length){renderList();show("s2")}};
+init();
+const ses=store("quiz_session"),sq0=store("quiz_questions");
+if(ses&&sq0&&sq0.length&&confirm("Ada kuis yang belum selesai. Lanjutkan?")){
+  Q=sq0;ans=ses.ans;flags=ses.flags||Q.map(()=>false);idx=ses.idx;endAt=ses.endAt;paused=ses.paused;pausedLeft=ses.pausedLeft;runQuiz();
+}else if(ses)drop("quiz_session");
+</script>
+</body>
+</html>
